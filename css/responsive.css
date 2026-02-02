@@ -1,0 +1,132 @@
+/* Responsive Design */
+
+/* Tablets */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    .logo {
+        font-size: 2.5rem;
+    }
+
+    .tagline {
+        font-size: 1rem;
+    }
+
+    .form-container {
+        padding: 20px;
+    }
+
+    .quote-card {
+        padding: 20px;
+    }
+
+    .quote-text {
+        font-size: 1rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .modal-content {
+        margin: 10px;
+        padding: 20px;
+    }
+}
+
+/* Mobile Phones */
+@media (max-width: 480px) {
+    .header {
+        padding: 30px 15px;
+    }
+
+    .logo {
+        font-size: 2rem;
+    }
+
+    .tagline {
+        font-size: 0.9rem;
+    }
+
+    .form-container {
+        padding: 15px;
+    }
+
+    .form-container h2,
+    .section-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .quote-input,
+    .comment-input {
+        padding: 12px;
+        font-size: 0.95rem;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 14px;
+    }
+
+    .quote-card {
+        padding: 15px;
+    }
+
+    .quote-text {
+        font-size: 0.95rem;
+    }
+
+    .quote-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .modal-content {
+        padding: 15px;
+        max-height: 95vh;
+    }
+
+    .comment-item {
+        padding: 12px;
+    }
+
+    .char-count {
+        font-size: 0.8rem;
+    }
+}
+
+/* Small Mobile Phones */
+@media (max-width: 320px) {
+    .logo {
+        font-size: 1.8rem;
+    }
+
+    .quote-card {
+        padding: 12px;
+    }
+
+    .rating-badge {
+        font-size: 0.8rem;
+        padding: 4px 10px;
+    }
+}
+
+/* Landscape Orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+    .header {
+        padding: 20px;
+    }
+
+    .logo {
+        font-size: 2rem;
+    }
+
+    .modal-content {
+        max-height: 85vh;
+    }
+}

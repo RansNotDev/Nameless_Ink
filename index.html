@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Anonymous quotes, human-written. AI-rated.">
+    <title>Nameless Ink - Anonymous Quotes</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="logo">🖋️ Nameless Ink</h1>
+            <p class="tagline">Anonymous quotes, human-written. AI-rated.</p>
+        </header>
+
+        <!-- Quote Submission Form -->
+        <section class="quote-form-section">
+            <div class="form-container">
+                <h2>Share Your Thought</h2>
+                <form id="quoteForm" class="quote-form">
+                    <textarea 
+                        id="quoteInput" 
+                        class="quote-input" 
+                        placeholder="Write your quote here... (AI will rate it 1-5)"
+                        rows="4"
+                        required
+                        maxlength="500"
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="charCount">0</span>/500
+                    </div>
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        Submit Quote
+                    </button>
+                </form>
+                <div id="quoteStatus" class="status-message"></div>
+            </div>
+        </section>
+
+        <!-- Quotes Display -->
+        <section class="quotes-section">
+            <div class="section-header">
+                <h2>Published Quotes</h2>
+                <button id="refreshBtn" class="refresh-btn">🔄 Refresh</button>
+            </div>
+            <div id="quotesContainer" class="quotes-container">
+                <div class="loading" id="loadingQuotes">Loading quotes...</div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Quote Modal (for comments) -->
+    <div id="quoteModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="modalQuoteContent"></div>
+            <div class="comment-section">
+                <h3>Add a Reply</h3>
+                <form id="commentForm" class="comment-form">
+                    <textarea 
+                        id="commentInput" 
+                        class="comment-input" 
+                        placeholder="Write your anonymous reply..."
+                        rows="3"
+                        required
+                        maxlength="300"
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="commentCharCount">0</span>/300
+                    </div>
+                    <button type="submit" class="submit-btn">Submit Reply</button>
+                </form>
+                <div id="commentStatus" class="status-message"></div>
+                <div id="commentsContainer" class="comments-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/quote-handler.js"></script>
+    <script src="js/comment-handler.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
