@@ -458,9 +458,9 @@ copies or substantial portions of the Software.
 
 ## 📞 Contact & Support
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/nameless-ink/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/nameless-ink/discussions)
-- **Email:** [Your Email] (optional)
+- **Issues:** [GitHub Issues](https://github.com/RansNotDev/nameless-ink/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/RansNotDev/nameless-ink/discussions)
+
 
 ---
 
