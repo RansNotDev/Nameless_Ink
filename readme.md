@@ -103,7 +103,7 @@ Nameless Ink follows a clean, serverless architecture with four distinct layers:
 ### 1. Frontend (Public Face)
 
 **Platform:** Vercel  
-**Technology:** React/Next.js (or vanilla JS)
+**Technology:** Plain HTML, CSS, JavaScript (Vanilla JS)
 
 **Responsibilities:**
 - Quote submission interface
@@ -120,7 +120,7 @@ Nameless Ink follows a clean, serverless architecture with four distinct layers:
 ### 2. Backend (The Gatekeeper)
 
 **Platform:** Vercel Serverless Functions  
-**Technology:** Node.js/Python
+**Technology:** Vanilla JavaScript (Node.js runtime)
 
 **Responsibilities:**
 - Receive quotes and comments
@@ -176,8 +176,8 @@ Nameless Ink follows a clean, serverless architecture with four distinct layers:
 
 | Component | Technology | Tier |
 |-----------|-----------|------|
-| **Frontend** | React/Next.js | Vercel (Free) |
-| **Backend** | Node.js/Python | Vercel Serverless (Free) |
+| **Frontend** | HTML, CSS, JavaScript (Vanilla) | Vercel (Free) |
+| **Backend** | Vanilla JavaScript (Node.js) | Vercel Serverless (Free) |
 | **AI Service** | Google Gemini API | Free Tier |
 | **Database** | Google Firestore | Free Tier |
 | **Hosting** | Vercel | Free Tier |
@@ -189,8 +189,8 @@ Nameless Ink follows a clean, serverless architecture with four distinct layers:
 
 ### Prerequisites
 
-- Node.js 18+ (for local development)
-- npm or yarn
+- **For Frontend:** Any modern web browser (Chrome, Firefox, Safari, Edge)
+- **For Backend:** Node.js 18+ (for Vercel serverless functions)
 - Google Cloud account (for Gemini API & Firestore)
 - Vercel account (for deployment)
 
@@ -202,11 +202,11 @@ Nameless Ink follows a clean, serverless architecture with four distinct layers:
    cd nameless-ink
    ```
 
-2. **Install dependencies**
+2. **Install backend dependencies** (for serverless functions)
    ```bash
+   cd api
    npm install
-   # or
-   yarn install
+   cd ..
    ```
 
 3. **Set up environment variables**
@@ -242,18 +242,48 @@ Nameless Ink follows a clean, serverless architecture with four distinct layers:
 
 ### Running Locally
 
+#### Frontend (Static Files)
+
+Since the frontend is plain HTML/CSS/JavaScript, you can:
+
+**Option 1: Simple HTTP Server (Python)**
 ```bash
-# Development mode
-npm run dev
+# Python 3
+python -m http.server 8000
 
-# Build for production
-npm run build
-
-# Start production server
-npm start
+# Python 2
+python -m SimpleHTTPServer 8000
 ```
 
-The application will be available at `http://localhost:3000`
+**Option 2: Node.js HTTP Server**
+```bash
+npx http-server -p 8000
+```
+
+**Option 3: VS Code Live Server**
+- Install "Live Server" extension
+- Right-click `index.html` → "Open with Live Server"
+
+**Option 4: Direct File Opening**
+- Simply open `index.html` in your browser (limited CORS for API calls)
+
+The frontend will be available at `http://localhost:8000` (or the port you choose)
+
+#### Backend (Serverless Functions)
+
+For local backend testing, use Vercel CLI:
+
+```bash
+# Install Vercel CLI globally
+npm install -g vercel
+
+# Run serverless functions locally
+vercel dev
+```
+
+This will start the backend API at `http://localhost:3000` (or the port Vercel assigns)
+
+**Note:** For production, deploy to Vercel which will automatically handle both frontend and backend.
 
 ---
 
@@ -304,27 +334,27 @@ The AI rates all submissions on a 1–5 scale:
 
 ```
 nameless-ink/
-├── frontend/
-│   ├── components/
-│   │   ├── QuoteForm.jsx
-│   │   ├── QuoteList.jsx
-│   │   └── CommentSection.jsx
-│   ├── pages/
-│   │   └── index.jsx
-│   └── styles/
-│       └── globals.css
-├── backend/
-│   ├── api/
-│   │   ├── submit-quote.js
-│   │   ├── submit-comment.js
-│   │   ├── get-quotes.js
-│   │   └── rate-content.js
-│   └── utils/
-│       ├── ai-rater.js
-│       └── db-handler.js
+├── index.html              # Main HTML file
+├── css/
+│   ├── style.css          # Main stylesheet
+│   └── responsive.css     # Responsive design styles
+├── js/
+│   ├── main.js            # Main application logic
+│   ├── api.js             # API communication functions
+│   ├── quote-handler.js   # Quote submission & display
+│   └── comment-handler.js # Comment submission & display
+├── api/                    # Vercel serverless functions
+│   ├── submit-quote.js    # Handle quote submission
+│   ├── submit-comment.js  # Handle comment submission
+│   ├── get-quotes.js      # Fetch approved quotes
+│   └── rate-content.js    # AI rating endpoint
+├── utils/                  # Backend utilities
+│   ├── ai-rater.js        # Gemini API integration
+│   └── db-handler.js      # Firestore operations
 ├── .env.example
 ├── .gitignore
-├── package.json
+├── vercel.json            # Vercel configuration
+├── package.json           # Backend dependencies only
 └── README.md
 ```
 
