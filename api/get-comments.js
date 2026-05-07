@@ -4,6 +4,8 @@
  */
 
 const { getCommentsForQuote } = require('../utils/db-handler');
+const { assertDatastoreConfigured } = require('../utils/server-env');
+const { sendApiCatch } = require('../utils/api-helpers');
 
 module.exports = async (req, res) => {
     // Set CORS headers
@@ -36,6 +38,8 @@ module.exports = async (req, res) => {
             });
         }
 
+        assertDatastoreConfigured();
+
         // Get comments for the quote
         const comments = await getCommentsForQuote(quoteId);
 
@@ -46,10 +50,6 @@ module.exports = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error in get-comments:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Internal server error. Please try again later.'
-        });
+        return sendApiCatch(res, error, 'get-comments');
     }
 };

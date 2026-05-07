@@ -4,6 +4,8 @@
  */
 
 const { getPublishedQuotes, getCommentCount } = require('../utils/db-handler');
+const { assertDatastoreConfigured } = require('../utils/server-env');
+const { sendApiCatch } = require('../utils/api-helpers');
 
 module.exports = async (req, res) => {
     // Set CORS headers
@@ -26,6 +28,8 @@ module.exports = async (req, res) => {
     }
 
     try {
+        assertDatastoreConfigured();
+
         // Get all published quotes
         const quotes = await getPublishedQuotes();
 
@@ -47,10 +51,6 @@ module.exports = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error in get-quotes:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Internal server error. Please try again later.'
-        });
+        return sendApiCatch(res, error, 'get-quotes');
     }
 };

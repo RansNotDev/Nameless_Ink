@@ -1,11 +1,39 @@
 /**
  * Database Handler Utility
- * Handles Firestore operations
+ * Firestore in production; in-memory store when LOCAL_DEV=true
  */
 
 const { Firestore } = require('@google-cloud/firestore');
+const { randomUUID } = require('crypto');
+const { timestampToIso } = require('./api-helpers');
+const { resolveFirestoreProjectId } = require('./server-env');
 
 let db = null;
+
+const mockQuotes = [];
+const mockComments = [];
+
+function isLocalDev() {
+    return String(process.env.LOCAL_DEV || '').toLowerCase() === 'true';
+}
+
+function serializeQuoteDoc(doc) {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        ...data,
+        timestamp: timestampToIso(data.timestamp) || data.timestamp,
+    };
+}
+
+function serializeCommentDoc(doc) {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        ...data,
+        timestamp: timestampToIso(data.timestamp) || data.timestamp,
+    };
+}
 
 /**
  * Initialize Firestore connection
@@ -15,33 +43,42 @@ function initFirestore() {
         return db;
     }
 
-    try {
-        const projectId = process.env.FIRESTORE_PROJECT_ID;
-        const keyFilename = process.env.FIRESTORE_KEY_FILE;
+    const projectId = resolveFirestoreProjectId();
+    const keyFilename = process.env.FIRESTORE_KEY_FILE;
 
-        if (!projectId) {
-            throw new Error('FIRESTORE_PROJECT_ID is not set in environment variables');
-        }
-
-        const config = { projectId };
-        
-        // Use service account key file if provided
-        if (keyFilename) {
-            config.keyFilename = keyFilename;
-        }
-
-        db = new Firestore(config);
-        return db;
-    } catch (error) {
-        console.error('Error initializing Firestore:', error);
-        throw error;
+    if (!projectId) {
+        throw new Error(
+            'Firestore project id missing: set FIRESTORE_PROJECT_ID or GOOGLE_CLOUD_PROJECT in .env, or LOCAL_DEV=true.'
+        );
     }
+
+    const config = { projectId };
+
+    if (keyFilename) {
+        config.keyFilename = keyFilename;
+    }
+
+    db = new Firestore(config);
+    return db;
 }
 
 /**
- * Save a quote to Firestore
+ * Save a quote to Firestore or mock store
  */
 async function saveQuote(quoteData) {
+    if (isLocalDev()) {
+        const id = randomUUID();
+        mockQuotes.unshift({
+            id,
+            text: quoteData.text,
+            rating: quoteData.rating,
+            published: quoteData.published,
+            timestamp: new Date().toISOString(),
+            commentCount: 0,
+        });
+        return id;
+    }
+
     const firestore = initFirestore();
     const quotesRef = firestore.collection('quotes');
 
@@ -50,7 +87,7 @@ async function saveQuote(quoteData) {
         rating: quoteData.rating,
         published: quoteData.published,
         timestamp: Firestore.FieldValue.serverTimestamp(),
-        commentCount: 0
+        commentCount: 0,
     };
 
     const docRef = await quotesRef.add(quote);
@@ -61,34 +98,52 @@ async function saveQuote(quoteData) {
  * Get all published quotes
  */
 async function getPublishedQuotes() {
+    if (isLocalDev()) {
+        return mockQuotes
+            .filter((q) => q.published)
+            .slice()
+            .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+    }
+
     const firestore = initFirestore();
     const quotesRef = firestore.collection('quotes');
 
-    try {
-        const snapshot = await quotesRef
-            .where('published', '==', true)
-            .orderBy('timestamp', 'desc')
-            .get();
+    const snapshot = await quotesRef
+        .where('published', '==', true)
+        .orderBy('timestamp', 'desc')
+        .get();
 
-        const quotes = [];
-        snapshot.forEach(doc => {
-            quotes.push({
-                id: doc.id,
-                ...doc.data()
-            });
-        });
+    const quotes = [];
+    snapshot.forEach((doc) => {
+        quotes.push(serializeQuoteDoc(doc));
+    });
 
-        return quotes;
-    } catch (error) {
-        console.error('Error getting quotes:', error);
-        throw error;
-    }
+    return quotes;
 }
 
 /**
- * Save a comment to Firestore
+ * Save a comment to Firestore or mock store
  */
 async function saveComment(commentData) {
+    if (isLocalDev()) {
+        const id = randomUUID();
+        const comment = {
+            id,
+            quoteId: commentData.quoteId,
+            text: commentData.text,
+            rating: commentData.rating,
+            published: commentData.published,
+            timestamp: new Date().toISOString(),
+        };
+        mockComments.unshift(comment);
+
+        if (comment.published) {
+            await incrementCommentCount(commentData.quoteId);
+        }
+
+        return id;
+    }
+
     const firestore = initFirestore();
     const commentsRef = firestore.collection('comments');
 
@@ -97,12 +152,11 @@ async function saveComment(commentData) {
         text: commentData.text,
         rating: commentData.rating,
         published: commentData.published,
-        timestamp: Firestore.FieldValue.serverTimestamp()
+        timestamp: Firestore.FieldValue.serverTimestamp(),
     };
 
     const docRef = await commentsRef.add(comment);
 
-    // Update comment count on quote if published
     if (comment.published) {
         await incrementCommentCount(commentData.quoteId);
     }
@@ -114,45 +168,51 @@ async function saveComment(commentData) {
  * Get comments for a specific quote
  */
 async function getCommentsForQuote(quoteId) {
+    if (isLocalDev()) {
+        return mockComments
+            .filter((c) => c.quoteId === quoteId && c.published)
+            .slice()
+            .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+    }
+
     const firestore = initFirestore();
     const commentsRef = firestore.collection('comments');
 
-    try {
-        const snapshot = await commentsRef
-            .where('quoteId', '==', quoteId)
-            .where('published', '==', true)
-            .orderBy('timestamp', 'desc')
-            .get();
+    const snapshot = await commentsRef
+        .where('quoteId', '==', quoteId)
+        .where('published', '==', true)
+        .orderBy('timestamp', 'desc')
+        .get();
 
-        const comments = [];
-        snapshot.forEach(doc => {
-            comments.push({
-                id: doc.id,
-                ...doc.data()
-            });
-        });
+    const comments = [];
+    snapshot.forEach((doc) => {
+        comments.push(serializeCommentDoc(doc));
+    });
 
-        return comments;
-    } catch (error) {
-        console.error('Error getting comments:', error);
-        throw error;
-    }
+    return comments;
 }
 
 /**
  * Increment comment count for a quote
  */
 async function incrementCommentCount(quoteId) {
+    if (isLocalDev()) {
+        const q = mockQuotes.find((x) => x.id === quoteId);
+        if (q) {
+            q.commentCount = (q.commentCount || 0) + 1;
+        }
+        return;
+    }
+
     const firestore = initFirestore();
     const quoteRef = firestore.collection('quotes').doc(quoteId);
 
     try {
         await quoteRef.update({
-            commentCount: Firestore.FieldValue.increment(1)
+            commentCount: Firestore.FieldValue.increment(1),
         });
     } catch (error) {
         console.error('Error incrementing comment count:', error);
-        // Don't throw - this is not critical
     }
 }
 
@@ -160,6 +220,10 @@ async function incrementCommentCount(quoteId) {
  * Get comment count for a quote (for display)
  */
 async function getCommentCount(quoteId) {
+    if (isLocalDev()) {
+        return mockComments.filter((c) => c.quoteId === quoteId && c.published).length;
+    }
+
     const firestore = initFirestore();
     const commentsRef = firestore.collection('comments');
 
@@ -182,5 +246,5 @@ module.exports = {
     saveComment,
     getCommentsForQuote,
     incrementCommentCount,
-    getCommentCount
+    getCommentCount,
 };

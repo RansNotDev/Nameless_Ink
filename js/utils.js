@@ -8,10 +8,29 @@
  */
 function formatTimestamp(timestamp) {
     if (!timestamp) return 'Just now';
-    
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+
+    let date;
+    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        date = timestamp.toDate();
+    } else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+        date = new Date(timestamp);
+    } else if (timestamp.seconds != null) {
+        const sec =
+            typeof timestamp.seconds === 'string'
+                ? parseInt(timestamp.seconds, 10)
+                : timestamp.seconds;
+        date = new Date(sec * 1000);
+    } else if (timestamp._seconds != null) {
+        date = new Date(timestamp._seconds * 1000);
+    } else {
+        date = new Date(timestamp);
+    }
+
+    if (Number.isNaN(date.getTime())) {
+        return 'Just now';
+    }
     const now = new Date();
-    const diff = now - date;
+    const diff = now.getTime() - date.getTime();
     
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);

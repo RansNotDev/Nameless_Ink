@@ -29,7 +29,7 @@ async function handleCommentSubmit(event) {
 
     // Disable form
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting...';
+        submitBtn.textContent = 'Posting…';
     hideCommentStatus(statusDiv);
 
     try {
@@ -114,10 +114,11 @@ function createCommentItem(comment) {
     
     return `
         <div class="comment-item">
-            <div class="comment-text">${escapeHtml(comment.text)}</div>
+            <p class="comment-text">${escapeHtml(comment.text)}</p>
             <div class="comment-meta">
-                <span class="rating-badge rating-${comment.rating}">
-                    ⭐ ${comment.rating}/5
+                <span class="rating-badge rating-${comment.rating}" aria-label="AI rating ${comment.rating} out of 5">
+                    <span class="rating-star" aria-hidden="true">★</span>
+                    <span>${comment.rating}</span><span class="rating-max">/5</span>
                 </span>
                 <span class="timestamp">${timestamp}</span>
             </div>

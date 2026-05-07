@@ -5,6 +5,8 @@
 
 const { rateContent, shouldPublish } = require('../utils/ai-rater');
 const { saveQuote } = require('../utils/db-handler');
+const { getJsonBody, sendApiCatch } = require('../utils/api-helpers');
+const { assertDatastoreConfigured } = require('../utils/server-env');
 
 module.exports = async (req, res) => {
     // Set CORS headers
@@ -27,7 +29,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const { text } = req.body;
+        const { text } = getJsonBody(req);
 
         // Validate input
         if (!text || typeof text !== 'string') {
@@ -55,6 +57,8 @@ module.exports = async (req, res) => {
 
         // Get rating threshold from environment (default: 3)
         const threshold = parseInt(process.env.RATING_THRESHOLD) || 3;
+
+        assertDatastoreConfigured();
 
         // Rate the content using AI
         const ratingData = await rateContent(trimmedText);
@@ -84,10 +88,6 @@ module.exports = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error in submit-quote:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Internal server error. Please try again later.'
-        });
+        return sendApiCatch(res, error, 'submit-quote');
     }
 };

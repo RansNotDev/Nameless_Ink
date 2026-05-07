@@ -5,6 +5,10 @@
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+function isLocalDev() {
+    return String(process.env.LOCAL_DEV || '').toLowerCase() === 'true';
+}
+
 /**
  * Initialize Gemini AI
  */
@@ -17,16 +21,39 @@ function initGemini() {
 }
 
 /**
- * Rate content using Gemini AI
- * Returns a rating from 1-5
+ * Rate content using Gemini AI (or a deterministic mock when LOCAL_DEV=true)
+ * @param {string} text
+ * @param {{ kind?: 'quote' | 'comment' }} [options] — LOCAL_DEV mock length rules only
  */
-async function rateContent(text) {
+async function rateContent(text, options = {}) {
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
         throw new Error('Invalid text provided for rating');
     }
 
+    const kind = options.kind === 'comment' ? 'comment' : 'quote';
+
+    if (isLocalDev()) {
+        const len = text.trim().length;
+        const minPublishChars = kind === 'comment' ? 2 : 4;
+
+        let rating = 4;
+        let feedback =
+            'Local dev mock rating (set LOCAL_DEV=false and GEMINI_API_KEY for real AI).';
+
+        if (len < minPublishChars) {
+            rating = 2;
+            feedback =
+                kind === 'comment'
+                    ? 'Mock: reply too short (try at least 2 characters). Real AI runs when LOCAL_DEV=false.'
+                    : 'Mock: quote too short (try at least 4 characters). Real AI runs when LOCAL_DEV=false.';
+        }
+
+        return { rating, feedback };
+    }
+
     const genAI = initGemini();
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+    const model = genAI.getGenerativeModel({ model: modelName });
 
     const prompt = `You are a quality rater for anonymous quotes. Rate the following text on a scale of 1-5 based on:
 - Thoughtfulness and depth
@@ -41,7 +68,7 @@ Rating scale:
 4 - Strong and thoughtful
 5 - Sharp, memorable, hits hard
 
-Text to rate: "${text}"
+Text to rate (JSON string): ${JSON.stringify(text)}
 
 Respond ONLY with a JSON object in this exact format:
 {

@@ -19,13 +19,21 @@ function displayQuotes(quotes) {
         return;
     }
 
-    container.innerHTML = quotes.map(quote => createQuoteCard(quote)).join('');
-    
-    // Add click listeners to quote cards
-    container.querySelectorAll('.quote-card').forEach(card => {
+    container.innerHTML = quotes.map((quote) => createQuoteCard(quote)).join('');
+
+    container.querySelectorAll('.quote-card').forEach((card) => {
         card.addEventListener('click', () => {
             const quoteId = card.dataset.quoteId;
-            openQuoteModal(quoteId, quote);
+            const fullQuote = quotes.find((q) => q.id === quoteId);
+            if (fullQuote) {
+                openQuoteModal(quoteId, fullQuote);
+            }
+        });
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                card.click();
+            }
         });
     });
 }
@@ -38,20 +46,19 @@ function createQuoteCard(quote) {
     const commentCount = quote.commentCount || 0;
     
     return `
-        <div class="quote-card" data-quote-id="${quote.id}">
-            <div class="quote-text">${escapeHtml(quote.text)}</div>
-            <div class="quote-meta">
-                <div>
-                    <span class="rating-badge rating-${quote.rating}">
-                        ⭐ ${quote.rating}/5
-                    </span>
-                </div>
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <span class="comment-count">💬 ${commentCount} ${commentCount === 1 ? 'reply' : 'replies'}</span>
+        <article class="quote-card" data-quote-id="${quote.id}" tabindex="0" role="button" aria-label="Open quote and replies">
+            <p class="quote-text">${escapeHtml(quote.text)}</p>
+            <footer class="quote-meta">
+                <span class="rating-badge rating-${quote.rating}" aria-label="AI rating ${quote.rating} out of 5">
+                    <span class="rating-star" aria-hidden="true">★</span>
+                    <span>${quote.rating}</span><span class="rating-max">/5</span>
+                </span>
+                <div class="quote-meta__aside">
+                    <span class="comment-count">${commentCount} ${commentCount === 1 ? 'reply' : 'replies'}</span>
                     <span class="timestamp">${timestamp}</span>
                 </div>
-            </div>
-        </div>
+            </footer>
+        </article>
     `;
 }
 
@@ -75,7 +82,7 @@ async function handleQuoteSubmit(event) {
 
     // Disable form
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting...';
+    submitBtn.textContent = 'Sending…';
     hideStatus(statusDiv);
 
     try {
@@ -99,7 +106,7 @@ async function handleQuoteSubmit(event) {
         showStatus(statusDiv, 'Error submitting quote. Please try again.', 'error');
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Quote';
+        submitBtn.textContent = 'Send into the ink';
     }
 }
 
@@ -108,12 +115,12 @@ async function handleQuoteSubmit(event) {
  */
 async function loadQuotes() {
     const container = document.getElementById('quotesContainer');
-    const loadingDiv = document.getElementById('loadingQuotes');
-    
-    if (loadingDiv) {
-        loadingDiv.style.display = 'block';
-    }
-    
+    container.innerHTML = `
+        <div class="loading skeleton-zone" id="loadingQuotes">
+            <span class="loading__text">Opening the folio…</span>
+        </div>
+    `;
+
     try {
         const result = await getQuotes();
         if (result.success && result.quotes) {
@@ -122,22 +129,22 @@ async function loadQuotes() {
             container.innerHTML = `
                 <div class="empty-state">
                     <h3>Error loading quotes</h3>
-                    <p>${result.error || 'Please try again later.'}</p>
+                    <p>${escapeHtml(result.error || 'Please try again later.')}</p>
                 </div>
             `;
         }
     } catch (error) {
         console.error('Error loading quotes:', error);
+        const detail =
+            error && error.message
+                ? escapeHtml(error.message)
+                : escapeHtml('Please check your connection and try again.');
         container.innerHTML = `
-            <div class="empty-state">
+            <div class="empty-state empty-state--error">
                 <h3>Error loading quotes</h3>
-                <p>Please check your connection and try again.</p>
+                <p>${detail}</p>
             </div>
         `;
-    } finally {
-        if (loadingDiv) {
-            loadingDiv.style.display = 'none';
-        }
     }
 }
 
@@ -152,10 +159,11 @@ function openQuoteModal(quoteId, quote) {
     
     modalContent.innerHTML = `
         <div class="modal-quote">
-            <div class="quote-text">${escapeHtml(quote.text)}</div>
+            <p class="quote-text">${escapeHtml(quote.text)}</p>
             <div class="quote-meta">
-                <span class="rating-badge rating-${quote.rating}">
-                    ⭐ ${quote.rating}/5
+                <span class="rating-badge rating-${quote.rating}" aria-label="AI rating ${quote.rating} out of 5">
+                    <span class="rating-star" aria-hidden="true">★</span>
+                    <span>${quote.rating}</span><span class="rating-max">/5</span>
                 </span>
                 <span class="timestamp">${formatTimestamp(quote.timestamp)}</span>
             </div>
@@ -167,7 +175,10 @@ function openQuoteModal(quoteId, quote) {
     
     // Load comments
     loadComments(quoteId);
-    
+
     // Show modal
     modal.classList.add('show');
+    requestAnimationFrame(() => {
+        modal.querySelector('.modal__close')?.focus();
+    });
 }

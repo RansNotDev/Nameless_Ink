@@ -5,9 +5,10 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "node scripts/local-dev-server.js",
+    "dev:vercel": "vercel dev",
     "deploy": "vercel --prod",
-    "start": "vercel dev"
+    "start": "node scripts/local-dev-server.js"
   },
   "keywords": [
     "anonymous",
@@ -23,7 +24,7 @@
     "@google/generative-ai": "^0.24.1"
   },
   "devDependencies": {
-    "vercel": "^34.0.0"
+    "vercel": "^50.41.0"
   },
   "engines": {
     "node": ">=18.0.0"

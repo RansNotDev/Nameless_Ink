@@ -47,14 +47,10 @@ function setupEventListeners() {
         closeModal.addEventListener('click', closeQuoteModal);
     }
 
-    // Close modal when clicking outside
     const modal = document.getElementById('quoteModal');
-    if (modal) {
-        modal.addEventListener('click', (event) => {
-            if (event.target === modal) {
-                closeQuoteModal();
-            }
-        });
+    const backdrop = modal?.querySelector('.modal__backdrop');
+    if (backdrop) {
+        backdrop.addEventListener('click', closeQuoteModal);
     }
 
     // Close modal with Escape key
@@ -98,13 +94,15 @@ function updateCharCount(inputId, countId, maxLength) {
     
     if (input && countElement) {
         const currentLength = input.value.length;
+        const wrap = countElement.closest('.char-count');
         countElement.textContent = currentLength;
-        
-        // Change color if approaching limit
-        if (currentLength > maxLength * 0.9) {
-            countElement.style.color = '#e74c3c';
-        } else {
-            countElement.style.color = '';
+
+        if (wrap) {
+            if (currentLength > maxLength * 0.9) {
+                wrap.classList.add('char-count--near-limit');
+            } else {
+                wrap.classList.remove('char-count--near-limit');
+            }
         }
     }
 }
